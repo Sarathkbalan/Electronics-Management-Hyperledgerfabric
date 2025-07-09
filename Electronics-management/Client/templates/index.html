@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Electronics Network — Device Dashboard</title>
+  <link rel="stylesheet" href="../public/styles/styles.css">
+</head>
+<body>
+
+  <h1>Electronics Network</h1>
+
+  <div class="card">
+    <h2>Create Electronic Device</h2>
+    <form id="createForm">
+      <input type="text" id="deviceId" placeholder="Device ID" required>
+      <input type="text" id="brand" placeholder="Brand" required>
+      <input type="text" id="deviceType" placeholder="Device Type" required>
+      <input type="text" id="color" placeholder="Color" required>
+      <input type="text" id="manufacturerName" placeholder="Manufacturer Name" required>
+      <input type="date" id="dateOfManufacture" placeholder="Manufacturing Date" required>
+      <button type="submit">Create Device</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Get Device by ID</h2>
+    <input type="text" id="searchId" placeholder="Enter Device ID">
+    <button onclick="getDevice()">Fetch</button>
+  </div>
+
+  <div class="card">
+    <h2>Get All Devices</h2>
+    <button onclick="getAllDevices()">Fetch All</button>
+  </div>
+
+  <pre id="result"></pre>
+
+  <script>
+    // Create Device
+    document.getElementById("createForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const data = {
+        deviceId: document.getElementById("deviceId").value,
+        brand: document.getElementById("brand").value,
+        deviceType: document.getElementById("deviceType").value,
+        color: document.getElementById("color").value,
+        manufacturerName: document.getElementById("manufacturerName").value,
+        dateOfManufacture: document.getElementById("dateOfManufacture").value
+      };
+
+      fetch("/api/device", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to create device");
+        return res.json();
+      })
+      .then(response => {
+        document.getElementById("result").textContent = JSON.stringify(response, null, 2);
+        document.getElementById("createForm").reset();
+      })
+      .catch(err => {
+        console.error("Error:", err);
+        document.getElementById("result").textContent = "Failed to create device.";
+      });
+    });
+
+    // Get by ID
+    function getDevice() {
+      const id = document.getElementById("searchId").value;
+      fetch("/api/device/" + id)
+        .then(res => res.json())
+        .then(data => {
+          const resultDiv = document.getElementById("result");
+
+          if (!data.data) {
+            resultDiv.innerHTML = `<p style="color: red;">Device not found!</p>`;
+            return;
+          }
+
+          let deviceData;
+          try {
+            deviceData = JSON.parse(data.data);
+          } catch (e) {
+            deviceData = data.data;
+          }
+
+          resultDiv.innerHTML = `
+            <div class="device-card">
+              <h3>Device Information</h3>
+              <p><strong>Device ID:</strong> ${deviceData.deviceId}</p>
+              <p><strong>Brand:</strong> ${deviceData.brand}</p>
+              <p><strong>Type:</strong> ${deviceData.deviceType}</p>
+              <p><strong>Color:</strong> ${deviceData.color}</p>
+
+              <p><strong>Manufactured On:</strong> ${deviceData.dateOfManufacture}</p>
+              <p><strong>Owned By:</strong> ${deviceData.ownedBy}</p>
+              <p><strong>Status:</strong> ${deviceData.status}</p>
+            </div>
+          `;
+        })
+        .catch(err => {
+          console.error("Error:", err);
+          document.getElementById("result").innerHTML = `<p style="color:red;">Failed to fetch device</p>`;
+        });
+    }
+
+    // Get All Devices
+    function getAllDevices() {
+      fetch("/api/devices")
+        .then(res => res.json())
+        .then(data => {
+          const resultDiv = document.getElementById("result");
+          resultDiv.innerHTML = "";
+
+          let deviceList = data.data;
+          if (typeof deviceList === "string") {
+            deviceList = JSON.parse(deviceList);
+          }
+
+          if (!deviceList || deviceList.length === 0) {
+            resultDiv.innerHTML = `<p style="color:red;">No devices found!</p>`;
+            return;
+          }
+
+          deviceList.forEach(device => {
+            const card = document.createElement("div");
+            card.className = "device-card";
+            card.innerHTML = `
+              <h3>Device ID: ${device.deviceId}</h3>
+              <p><strong>Brand:</strong> ${device.brand}</p>
+              <p><strong>Type:</strong> ${device.deviceType}</p>
+              <p><strong>Color:</strong> ${device.color}</p>
+
+              <p><strong>Manufactured On:</strong> ${device.dateOfManufacture}</p>
+              <p><strong>Owned By:</strong> ${device.ownedBy}</p>
+              <p><strong>Status:</strong> ${device.status}</p>
+            `;
+            resultDiv.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Error:", err);
+          document.getElementById("result").innerHTML = `<p style="color:red;">Failed to fetch devices</p>`;
+        });
+    }
+  </script>
+</body>
+</html>
