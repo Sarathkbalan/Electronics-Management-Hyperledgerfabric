@@ -89,7 +89,10 @@ export CORE_PEER_ADDRESS=localhost:9051
 ```
 ## CreateOrder Only Org2
 ```bash
-echo -n "{\"brand\":\"LG\",\"deviceType\":\"Television\",\"color\":\"Black\",\"dealerName\":\"ElectroWorld\"}" | base64
+export BRAND=$(echo -n "Samsung" | base64 | tr -d '\n')
+export DEVICE_TYPE=$(echo -n "Phone" | base64 | tr -d '\n')
+export COLOR=$(echo -n "Black" | base64 | tr -d '\n')
+export DEALER_NAME=$(echo -n "ElectroMart" | base64 | tr -d '\n')
 
 ```
 ```bash
@@ -101,8 +104,8 @@ peer chaincode invoke \
   -n Electronics-management \
   --peerAddresses localhost:7051 --tlsRootCertFiles $ORG1_PEER_TLSROOTCERT \
   --peerAddresses localhost:9051 --tlsRootCertFiles $ORG2_PEER_TLSROOTCERT \
-  --transient '{"brand":"U2Ftc3VuZw==","deviceType":"UGhvbmU=","color":"QmxhY2s=","dealerName":"RWxlY3Ryb01hcnQ="}' \
-  -c '{"function":"ElectronicsOrderContract:CreateOrder","Args":["ORD-001"]}'
+  -c '{"Args":["ElectronicsOrderContract:CreateOrder","ORD-001"]}' \
+  --transient "{\"brand\":\"$BRAND\",\"deviceType\":\"$DEVICE_TYPE\",\"color\":\"$COLOR\",\"dealerName\":\"$DEALER_NAME\"}"
 
 ```
 ## Read Order by ID
